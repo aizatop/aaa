@@ -41,3 +41,5 @@ temp/
 
 # Don't ignore assets folder (needed for GitHub Pages)
 !assets/
+
+.env*
