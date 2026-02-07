@@ -472,6 +472,15 @@ function createCountryCard(country) {
 function setupEventListeners() {
     console.log('🔧 Настройка обработчиков событий...');
     
+    // Кнопка "Начать путешествие"
+    const getStartedBtn = document.getElementById('getStartedBtn');
+    if (getStartedBtn) {
+        getStartedBtn.addEventListener('click', () => {
+            console.log('🚀 Кнопка "Начать путешествие" нажата');
+            showLoginModal();
+        });
+    }
+    
     // Кнопка входа
     const loginBtn = document.getElementById('loginBtn');
     if (loginBtn) {
@@ -606,6 +615,14 @@ async function checkAuthStatus() {
     }
 }
 
+function updateUIForLoggedInUser() {
+    document.getElementById('userInfo').style.display = 'flex';
+    document.getElementById('username').textContent = currentUser.username;
+    document.getElementById('loginBtn').style.display = 'none';
+    document.getElementById('registerBtn').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'block';
+}
+
 function updateUIForLoggedOutUser() {
     document.getElementById('userInfo').style.display = 'none';
     document.getElementById('loginBtn').style.display = 'block';
@@ -640,12 +657,35 @@ function clearFormErrors(formId) {
     inputs.forEach(input => input.classList.remove('error'));
 }
 
+// Функции для модальных окон
+function showLoginModal() {
+    console.log('🔓 Открытие модального окна входа');
+    document.getElementById('loginModal').style.display = 'block';
+}
+
+function hideLoginModal() {
+    console.log('🔒 Закрытие модального окна входа');
+    document.getElementById('loginModal').style.display = 'none';
+}
+
+function showRegisterModal() {
+    console.log('🔓 Открытие модального окна регистрации');
+    document.getElementById('registerModal').style.display = 'block';
+}
+
+function hideRegisterModal() {
+    console.log('🔒 Закрытие модального окна регистрации');
+    document.getElementById('registerModal').style.display = 'none';
+}
+
 // Функции для AI модального окна
 function showAIModal() {
+    console.log('🤖 Открытие AI модального окна');
     document.getElementById('aiModal').style.display = 'block';
 }
 
 function closeAIModal() {
+    console.log('🤖 Закрытие AI модального окна');
     document.getElementById('aiModal').style.display = 'none';
 }
 
