@@ -465,44 +465,116 @@ function createCountryCard(country) {
 }
 
 function setupEventListeners() {
+    console.log('🔧 Настройка обработчиков событий...');
+    
     // Кнопка входа
-    document.getElementById('loginBtn').addEventListener('click', showLoginModal);
+    const loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => {
+            console.log('Кнопка входа нажата');
+            showLoginModal();
+        });
+    }
     
     // Кнопка выхода
-    document.getElementById('logoutBtn').addEventListener('click', logout);
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            console.log('Кнопка выхода нажата');
+            logout();
+        });
+    }
     
     // Кнопка регистрации
-    document.getElementById('registerBtn').addEventListener('click', showRegisterModal);
+    const registerBtn = document.getElementById('registerBtn');
+    if (registerBtn) {
+        registerBtn.addEventListener('click', () => {
+            console.log('Кнопка регистрации нажата');
+            showRegisterModal();
+        });
+    }
     
     // Закрытие модальных окон
-    document.getElementById('closeModal').addEventListener('click', hideLoginModal);
-    document.getElementById('closeRegisterModal').addEventListener('click', hideRegisterModal);
+    const closeModal = document.getElementById('closeModal');
+    if (closeModal) {
+        closeModal.addEventListener('click', () => {
+            console.log('Кнопка закрытия входа нажата');
+            hideLoginModal();
+        });
+    }
+    
+    const closeRegisterModal = document.getElementById('closeRegisterModal');
+    if (closeRegisterModal) {
+        closeRegisterModal.addEventListener('click', () => {
+            console.log('Кнопка закрытия регистрации нажата');
+            hideRegisterModal();
+        });
+    }
     
     // Обработчики форм
-    document.getElementById('loginForm').addEventListener('submit', handleLogin);
-    document.getElementById('registerForm').addEventListener('submit', handleRegister);
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', (e) => {
+            console.log('Форма входа отправлена');
+            handleLogin(e);
+        });
+    }
     
-    // Кнопка отправки сообщения
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', (e) => {
+            console.log('Форма регистрации отправлена');
+            handleRegister(e);
+        });
+    }
+    
+    // Кнопка отправки сообщения - ГЛАВНОЕ!
     const sendBtn = document.getElementById('sendBtn');
     if (sendBtn) {
-        sendBtn.addEventListener('click', function(e) {
+        console.log('✅ Кнопка отправки найдена, добавляю обработчик');
+        sendBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log('Кнопка отправки нажата!');
+            console.log('🚀 Кнопка отправки НАЖАТА!');
             sendMessage();
         });
+    } else {
+        console.error('❌ Кнопка отправки НЕ найдена!');
     }
     
     // Поддержка Enter для отправки сообщений
     const chatInput = document.getElementById('chatInput');
     if (chatInput) {
-        chatInput.addEventListener('keypress', function(e) {
+        console.log('✅ Поле ввода найдено, добавляю обработчик Enter');
+        chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                console.log('Enter нажат!');
+                console.log('⌨️ Enter НАЖАТ!');
                 sendMessage();
             }
         });
+    } else {
+        console.error('❌ Поле ввода НЕ найдено!');
     }
+    
+    // Закрытие модальных окон при клике вне их
+    window.addEventListener('click', function(event) {
+        const aiModal = document.getElementById('aiModal');
+        if (event.target === aiModal) {
+            aiModal.style.display = 'none';
+        }
+        
+        const loginModal = document.getElementById('loginModal');
+        if (event.target === loginModal) {
+            loginModal.style.display = 'none';
+        }
+        
+        const registerModal = document.getElementById('registerModal');
+        if (event.target === registerModal) {
+            registerModal.style.display = 'none';
+        }
+    });
+    
+    console.log('✅ Все обработчики событий настроены');
 }
 
 async function checkAuthStatus() {
