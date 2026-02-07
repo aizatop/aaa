@@ -288,18 +288,35 @@ function validateEmail(email) {
 function showFieldError(fieldId) {
     const field = document.getElementById(fieldId);
     const formGroup = field.closest('.form-group');
+    formGroup.classList.remove('success');
     formGroup.classList.add('error');
     
     // Remove error on input
     field.addEventListener('input', function() {
         formGroup.classList.remove('error');
-    }, { once: true });
+        if (validateField(field)) {
+            formGroup.classList.add('success');
+        }
+    }, { once: false });
+}
+
+function validateField(field) {
+    if (field.type === 'email') {
+        return validateEmail(field.value);
+    } else if (field.type === 'password') {
+        return field.value.length >= 6;
+    } else if (field.type === 'text') {
+        return field.value.length >= 3;
+    }
+    return false;
 }
 
 function clearFormErrors(formId) {
     const form = document.getElementById(formId);
-    const errorGroups = form.querySelectorAll('.form-group.error');
-    errorGroups.forEach(group => group.classList.remove('error'));
+    const errorGroups = form.querySelectorAll('.form-group.error, .form-group.success');
+    errorGroups.forEach(group => {
+        group.classList.remove('error', 'success');
+    });
 }
 
 function logout() {
