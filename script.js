@@ -482,23 +482,27 @@ function setupEventListeners() {
     document.getElementById('loginForm').addEventListener('submit', handleLogin);
     document.getElementById('registerForm').addEventListener('submit', handleRegister);
     
-    // Поддержка Enter для отправки сообщений
-    document.getElementById('sendBtn').addEventListener('click', sendMessage);
-    document.getElementById('chatInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
+    // Кнопка отправки сообщения
+    const sendBtn = document.getElementById('sendBtn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Кнопка отправки нажата!');
             sendMessage();
-        }
-    });
+        });
+    }
     
-    // Close modals on outside click
-    window.addEventListener('click', function(e) {
-        if (e.target === document.getElementById('loginModal')) {
-            hideLoginModal();
-        }
-        if (e.target === document.getElementById('registerModal')) {
-            hideRegisterModal();
-        }
-    });
+    // Поддержка Enter для отправки сообщений
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                console.log('Enter нажат!');
+                sendMessage();
+            }
+        });
+    }
 }
 
 async function checkAuthStatus() {
@@ -517,18 +521,69 @@ async function checkAuthStatus() {
                 username: session.user.email.split('@')[0],
                 session: session
             };
+            
             updateUIForLoggedInUser();
         }
     } catch (error) {
-        console.error('Ошибка при проверке авторизации:', error);
+        console.error('Ошибка при проверке статуса:', error);
     }
 }
 
-function updateUIForLoggedInUser() {
-    document.getElementById('userInfo').style.display = 'flex';
-    document.getElementById('username').textContent = currentUser.username;
-    document.getElementById('loginBtn').style.display = 'none';
-    document.getElementById('logoutBtn').style.display = 'block';
+function updateUIForLoggedOutUser() {
+    document.getElementById('userInfo').style.display = 'none';
+    document.getElementById('loginBtn').style.display = 'block';
+    document.getElementById('registerBtn').style.display = 'block';
+    document.getElementById('logoutBtn').style.display = 'none';
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+function showFieldError(fieldId) {
+    document.getElementById(fieldId).classList.add('error');
+}
+
+function clearFormErrors(formId) {
+    const form = document.getElementById(formId);
+    const inputs = form.querySelectorAll('input');
+    inputs.forEach(input => input.classList.remove('error'));
+}
+
+// Функции для AI модального окна
+function showAIModal() {
+    document.getElementById('aiModal').style.display = 'block';
+}
+
+function closeAIModal() {
+    document.getElementById('aiModal').style.display = 'none';
+}
+
+function askAIQuestion(question) {
+    closeAIModal();
+    askAIAssistant(question);
+}
+
+function askCustomAIQuestion() {
+    const customQuestion = document.getElementById('aiCustomQuestion').value.trim();
+    if (customQuestion) {
+        closeAIModal();
+        askAIAssistant(customQuestion);
+        document.getElementById('aiCustomQuestion').value = '';
+    }
 }
 
 function updateUIForLoggedOutUser() {
