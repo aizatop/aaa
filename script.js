@@ -331,12 +331,6 @@ function logout() {
 function openVideo(videoUrl, event) {
     event.preventDefault();
     
-    if (!currentUser) {
-        showNotification('Пожалуйста, войдите для просмотра видео', 'warning');
-        showLoginModal();
-        return;
-    }
-    
     showNotification('Открытие видео в новой вкладке...', 'info');
     
     // Открываем видео в новой вкладке
