@@ -1,11 +1,11 @@
 // Supabase Configuration
-// ЗАМЕНИТЕ ЭТИ ЗНАЧЕНИЯ НА ВАШИ КЛЮЧИ ИЗ SUPABASE
+// ПОДКЛЮЧЕНО К ВАШЕМУ ПРОЕКТУ SUPABASE
 
 const { createClient } = window.supabase;
 
 const supabase = createClient(
-    'https://your-project-id.supabase.co',    // ЗАМЕНИТЕ на ваш Project URL
-    'your-anon-public-key-here'             // ЗАМЕНИТЕ на ваш anon public key
+    'https://wjtxswzeibngvwaanusd.supabase.co',
+    'sb_publishable_zuu5cnEHd9vosElaR1wGvw_432g_6Ih'
 );
 
 window.supabaseClient = supabase;

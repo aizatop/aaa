@@ -126,8 +126,11 @@
                 </div>
             </div>
             <div class="chat-input-container">
-                <input type="text" id="chatInput" placeholder="Введите сообщение..." class="chat-input">
-                <button id="sendBtn" class="send-btn">Отправить</button>
+                <input type="text" id="chatInput" placeholder="Напишите сообщение..." class="chat-input">
+                <button onclick="sendMessage()" class="send-btn">Отправить</button>
+                <button onclick="showAIModal()" class="ai-assistant-btn" title="AI Помощник">
+                    🤖 AI Помощник
+                </button>
             </div>
         </div>
     </section>
@@ -135,6 +138,33 @@
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js"></script>
+
+    <!-- AI Assistant Modal -->
+    <div id="aiModal" class="modal">
+        <div class="modal-content ai-modal-content">
+            <div class="modal-header">
+                <h2>🤖 AI Помощник по путешествиям</h2>
+                <span class="close" onclick="closeAIModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Задайте любой вопрос о путешествиях!</p>
+                <div class="ai-quick-questions">
+                    <button onclick="askAIQuestion('Расскажи о Японии')" class="ai-quick-btn">🇯🇵 Япония</button>
+                    <button onclick="askAIQuestion('Расскажи о Франции')" class="ai-quick-btn">🇫🇷 Франция</button>
+                    <button onclick="askAIQuestion('Расскажи об Италии')" class="ai-quick-btn">🇮🇹 Италия</button>
+                    <button onclick="askAIQuestion('Расскажи о Лондоне')" class="ai-quick-btn">🇬🇧 Лондон</button>
+                    <button onclick="askAIQuestion('Куда поехать в отпуск?')" class="ai-quick-btn">🌍 Куда поехать?</button>
+                    <button onclick="askAIQuestion('Какие документы нужны?')" class="ai-quick-btn">📄 Документы</button>
+                    <button onclick="askAIQuestion('Как спланировать бюджет?')" class="ai-quick-btn">💰 Бюджет</button>
+                    <button onclick="askAIQuestion('Лучшие достопримечательности')" class="ai-quick-btn">🏛️ Достопримечательности</button>
+                </div>
+                <div class="ai-custom-question">
+                    <input type="text" id="aiCustomQuestion" placeholder="Задайте свой вопрос..." class="ai-input">
+                    <button onclick="askCustomAIQuestion()" class="ai-send-btn">Спросить</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Login Modal -->
     <div id="loginModal" class="modal">

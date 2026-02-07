@@ -42,17 +42,63 @@ const countriesData = [
     }
 ];
 
-// Initialize app
+// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
+    // Проверяем подключение к Supabase
+    testSupabaseConnection();
+    
+    // Инициализируем чат
+    initializeChat();
+    
+    // Загружаем страны
+    loadCountries();
+    
+    // Проверяем статус аутентификации
+    checkAuthStatus();
+    
+    // Устанавливаем слушатели событий
+    setupEventListeners();
 });
 
-function initializeApp() {
-    loadCountries();
-    setupEventListeners();
-    checkAuthStatus();
-    setupSmoothScroll();
-    initializeChat();
+// Тест подключения к Supabase
+async function testSupabaseConnection() {
+    try {
+        console.log('🔍 Тест подключения к Supabase...');
+        
+        // Пробуем подключиться к таблице
+        const { data, error } = await supabase
+            .from('messages')
+            .select('count')
+            .limit(1);
+            
+        if (error) {
+            console.error('❌ Ошибка подключения к Supabase:', error);
+            showNotification('Ошибка подключения к базе данных', 'error');
+        } else {
+            console.log('✅ Подключение к Supabase успешно!');
+        }
+    } catch (error) {
+        console.error('❌ Критическая ошибка Supabase:', error);
+        showNotification('Критическая ошибка базы данных', 'error');
+    }
+}
+
+function setupAuthListener() {
+    // Слушаем изменения состояния аутентификации
+    supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+            currentUser = {
+                id: session.user.id,
+                email: session.user.email,
+                username: session.user.email.split('@')[0],
+                session: session
+            };
+            updateUIForLoggedInUser();
+        } else if (event === 'SIGNED_OUT') {
+            currentUser = null;
+            updateUIForLoggedOutUser();
+        }
+    });
 }
 
 // Chat Functions
@@ -75,8 +121,7 @@ async function loadChatHistory() {
         const { data, error } = await supabase
             .from('messages')
             .select('*')
-            .eq('room_id', 'general')
-            .order('created_at', { ascending: true })
+            .order('timestamp', { ascending: true })
             .limit(50);
 
         if (error) {
@@ -110,8 +155,7 @@ function subscribeToChat() {
             { 
                 event: 'INSERT', 
                 schema: 'public', 
-                table: 'messages',
-                filter: 'room_id=eq.general'
+                table: 'messages'
             }, 
             (payload) => {
                 // Новое сообщение получено
@@ -123,7 +167,14 @@ function subscribeToChat() {
 }
 
 function displayChatMessage(message) {
+    console.log('Отображение сообщения:', message);
+    
     const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) {
+        console.error('Контейнер сообщений не найден!');
+        return;
+    }
+    
     const messageElement = document.createElement('div');
     messageElement.className = 'chat-message';
     
@@ -134,11 +185,12 @@ function displayChatMessage(message) {
         <div class="message-author ${isOwnMessage ? 'own-message' : ''}">
             ${message.username} ${isOwnMessage ? '(вы)' : ''}
         </div>
-        <div class="message-content">${escapeHtml(message.content)}</div>
-        <div class="message-time">${formatTime(new Date(message.created_at))}</div>
+        <div class="message-content">${escapeHtml(message.text)}</div>
+        <div class="message-time">${formatTime(new Date(message.timestamp))}</div>
     `;
     
     chatMessages.appendChild(messageElement);
+    console.log('Сообщение добавлено в чат');
 }
 
 function escapeHtml(text) {
@@ -147,9 +199,160 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function scrollToBottom() {
+// AI Ассистент для чата
+async function askAIAssistant(question) {
+    try {
+        // Показываем что AI печатает
+        showAITyping();
+        
+        // Создаем промпт для AI
+        const prompt = `Ты - AI ассистент путешественника по имени "TravelBot". Отвечай на вопросы о путешествиях, странах, достопримечательностях. Будь дружелюбным и полезным. Ответь на русском языке. Вопрос: ${question}`;
+        
+        // Здесь можно подключить реальный AI API
+        // Пока используем заглушки с умными ответами
+        const response = await generateAIResponse(question);
+        
+        // Скрываем что AI печатает
+        hideAITyping();
+        
+        // Отправляем ответ AI в чат
+        const aiMessage = {
+            id: 'ai-' + Date.now(),
+            user_id: 'ai-assistant',
+            username: '🤖 TravelBot',
+            text: response,
+            timestamp: new Date().toISOString(),
+            type: 'ai'
+        };
+        
+        displayChatMessage(aiMessage);
+        scrollToBottom();
+        
+    } catch (error) {
+        console.error('Ошибка AI ассистента:', error);
+        hideAITyping();
+        
+        // Показываем сообщение об ошибке
+        const errorMessage = {
+            id: 'ai-error-' + Date.now(),
+            user_id: 'ai-assistant',
+            username: '🤖 TravelBot',
+            text: 'Извините, у меня технические проблемы. Попробуйте спросить позже!',
+            timestamp: new Date().toISOString(),
+            type: 'ai'
+        };
+        
+        displayChatMessage(errorMessage);
+    }
+}
+
+// Генерация ответов AI (заглушка)
+async function generateAIResponse(question) {
+    const lowerQuestion = question.toLowerCase();
+    
+    // Ответы о странах
+    if (lowerQuestion.includes('япония') || lowerQuestion.includes('японию')) {
+        return '🇯🇵 Япония - удивительная страна! Рекомендую посетить Токио, Киото, Осаку. Обязательно попробуйте суши, рамен, посетите храмы и насладитесь цветом сакуры весной!';
+    }
+    
+    if (lowerQuestion.includes('франция') || lowerQuestion.includes('париж')) {
+        return '🇫🇷 Франция прекрасна! Париж с Эйфелевой башней, Лувр, Ницца на Лазурном берегу. Попробуйте круассаны, вино и сыры. Лучшее время - весна и осень!';
+    }
+    
+    if (lowerQuestion.includes('италия') || lowerQuestion.includes('рим')) {
+        return '🇮🇹 Италия - история и романтика! Рим с Колизеем, Венеция с каналами, Флоренция с искусством. Паста, пицца, мороженое - обязательно!';
+    }
+    
+    if (lowerQuestion.includes('лондон') || lowerQuestion.includes('британия')) {
+        return '🇬🇧 Лондон - королевская столица! Биг-Бен, Тауэр, Букингемский дворец. Попробуйте английский завтрак, посетите музеи и насладитесь чаепитием!';
+    }
+    
+    // Ответы о путешествиях
+    if (lowerQuestion.includes('куда поехать') || lowerQuestion.includes('куда ехать')) {
+        return '🌍 Выбор направления зависит от ваших интересов! Для культуры - Европа, для экзотики - Азия, для природы - Скандинавия. Какой тип путешествия вам интересен?';
+    }
+    
+    if (lowerQuestion.includes('документы') || lowerQuestion.includes('виза')) {
+        return '📄 Для путешествий обычно нужны: загранпаспорт, виза (если требуется), страховка, билеты. Для Европы - шенгенская виза, для Азии - проверяйте требования каждой страны.';
+    }
+    
+    if (lowerQuestion.includes('бюджет') || lowerQuestion.includes('деньги')) {
+        return '💰 Бюджет зависит от направления и стиля путешествия. Европа - €50-100 в день, Азия - €20-50, Америка - €80-150. Экономия: жильё через Airbnb, общественный транспорт, уличная еда.';
+    }
+    
+    // Ответы о достопримечательностях
+    if (lowerQuestion.includes('достопримечательност')) {
+        return '🏛️ В каждой стране есть свои жемчужины! Европа - Эйфелева башня, Колизей, Биг-Бен. Азия - Великая Китайская стена, Тадж-Махал. Америка - Статуя Свободы, Гранд-Каньон. Что вас интересует?';
+    }
+    
+    // Приветствия
+    if (lowerQuestion.includes('привет') || lowerQuestion.includes('здравствуй')) {
+        return '👋 Привет! Я TravelBot, ваш AI ассистент по путешествиям! Спрашивайте меня о странах, достопримечательностях, документах, бюджете - я помогу спланировать идеальное путешествие!';
+    }
+    
+    // Ответ по умолчанию
+    return '🤔 Интересный вопрос! Я могу рассказать о странах (Япония, Франция, Италия, Лондон), достопримечательностях, документах для поездок, бюджете путешествий. Спросите меня что-нибудь конкретное о путешествиях!';
+}
+
+// Показать что AI печатает
+function showAITyping() {
     const chatMessages = document.getElementById('chatMessages');
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    const typingElement = document.createElement('div');
+    typingElement.id = 'ai-typing';
+    typingElement.className = 'chat-message ai-message';
+    typingElement.innerHTML = `
+        <div class="message-author">🤖 TravelBot</div>
+        <div class="message-content">
+            <span class="typing-dots">
+                <span class="dot">●</span>
+                <span class="dot">●</span>
+                <span class="dot">●</span>
+            </span>
+        </div>
+    `;
+    chatMessages.appendChild(typingElement);
+    scrollToBottom();
+}
+
+// Функции для AI модального окна
+function showAIModal() {
+    document.getElementById('aiModal').style.display = 'block';
+}
+
+function closeAIModal() {
+    document.getElementById('aiModal').style.display = 'none';
+}
+
+function askAIQuestion(question) {
+    closeAIModal();
+    askAIAssistant(question);
+}
+
+function askCustomAIQuestion() {
+    const customQuestion = document.getElementById('aiCustomQuestion').value.trim();
+    if (customQuestion) {
+        closeAIModal();
+        askAIAssistant(customQuestion);
+        document.getElementById('aiCustomQuestion').value = '';
+    }
+}
+
+// Закрытие модального окна при клике вне его
+window.onclick = function(event) {
+    const aiModal = document.getElementById('aiModal');
+    if (event.target == aiModal) {
+        aiModal.style.display = 'none';
+    }
+    
+    const loginModal = document.getElementById('loginModal');
+    if (event.target == loginModal) {
+        loginModal.style.display = 'none';
+    }
+    
+    const registerModal = document.getElementById('registerModal');
+    if (event.target == registerModal) {
+        registerModal.style.display = 'none';
+    }
 }
 
 async function sendMessage() {
@@ -158,6 +361,23 @@ async function sendMessage() {
     
     if (!message) return;
     
+    // Проверяем, это вопрос к AI
+    if (message.toLowerCase().includes('бот') || 
+        message.toLowerCase().includes('travelbot') || 
+        message.toLowerCase().includes('ассистент') ||
+        message.toLowerCase().includes('помощь') ||
+        message.toLowerCase().includes('подскажи') ||
+        message.toLowerCase().includes('расскажи') ||
+        message.toLowerCase().includes('что') ||
+        message.toLowerCase().includes('как') ||
+        message.toLowerCase().includes('куда')) {
+        
+        // Отправляем вопрос AI
+        askAIAssistant(message);
+        input.value = '';
+        return;
+    }
+    
     if (!currentUser) {
         showNotification('Пожалуйста, войдите для отправки сообщений', 'warning');
         showLoginModal();
@@ -165,14 +385,17 @@ async function sendMessage() {
     }
     
     try {
-        const { error } = await supabase
+        console.log('Отправка сообщения:', { message, username: currentUser.username, user_id: currentUser.id });
+        
+        const { data, error } = await supabase
             .from('messages')
             .insert({
-                content: message,
-                username: currentUser.username,
+                text: message,                    // ← Правильное поле
+                username: currentUser.username,      // ← Правильное поле
                 user_id: currentUser.id,
-                room_id: 'general'
-            });
+                type: 'user'
+            })
+            .select(); // Добавляем select чтобы получить данные обратно
 
         if (error) {
             console.error('Ошибка отправки сообщения:', error);
@@ -180,10 +403,17 @@ async function sendMessage() {
             return;
         }
 
+        console.log('Сообщение успешно отправлено:', data);
+
         // Очищаем поле ввода
         input.value = '';
         
-        // Сообщение появится через realtime подписку
+        // Показываем сообщение сразу (не ждем realtime)
+        if (data && data[0]) {
+            displayChatMessage(data[0]);
+            scrollToBottom();
+        }
+        
         showNotification('Сообщение отправлено', 'success');
         
     } catch (error) {
@@ -268,11 +498,26 @@ function setupEventListeners() {
     });
 }
 
-function checkAuthStatus() {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        updateUIForLoggedInUser();
+async function checkAuthStatus() {
+    try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+            console.error('Ошибка проверки сессии:', error);
+            return;
+        }
+        
+        if (session) {
+            currentUser = {
+                id: session.user.id,
+                email: session.user.email,
+                username: session.user.email.split('@')[0],
+                session: session
+            };
+            updateUIForLoggedInUser();
+        }
+    } catch (error) {
+        console.error('Ошибка при проверке авторизации:', error);
     }
 }
 
@@ -310,7 +555,7 @@ function hideRegisterModal() {
     document.body.style.overflow = 'auto';
 }
 
-function handleLogin(e) {
+async function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
@@ -341,17 +586,37 @@ function handleLogin(e) {
     submitBtn.classList.add('loading');
     submitBtn.textContent = '';
     
-    // Simulate API call
-    setTimeout(() => {
-        const user = {
-            id: Date.now(),
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
-            username: email.split('@')[0],
-            loginTime: new Date().toISOString()
+            password: password
+        });
+
+        if (error) {
+            console.error('Ошибка входа:', error);
+            showNotification('Ошибка входа: ' + error.message, 'error');
+            return;
+        }
+
+        // Получаем профиль пользователя из таблицы users
+        const { data: profileData, error: profileError } = await supabase
+            .from('users')
+            .select('username, full_name')
+            .eq('email', email)
+            .single();
+
+        let username = email.split('@')[0]; // fallback
+        if (profileData && !profileError) {
+            username = profileData.username || profileData.full_name || username;
+        }
+        
+        currentUser = {
+            id: data.user.id,
+            email: data.user.email,
+            username: username,
+            session: data.session
         };
         
-        currentUser = user;
-        localStorage.setItem('currentUser', JSON.stringify(user));
         updateUIForLoggedInUser();
         hideLoginModal();
         
@@ -360,11 +625,17 @@ function handleLogin(e) {
         submitBtn.classList.remove('loading');
         submitBtn.textContent = 'Войти';
         
-        showNotification('Добро пожаловать, ' + user.username + '!', 'success');
-    }, 1500);
+        showNotification('Добро пожаловать, ' + currentUser.username + '!', 'success');
+        
+    } catch (error) {
+        console.error('Ошибка при входе:', error);
+        showNotification('Ошибка соединения', 'error');
+        submitBtn.classList.remove('loading');
+        submitBtn.textContent = 'Войти';
+    }
 }
 
-function handleRegister(e) {
+async function handleRegister(e) {
     e.preventDefault();
     const email = document.getElementById('regEmail').value;
     const password = document.getElementById('regPassword').value;
@@ -401,17 +672,44 @@ function handleRegister(e) {
     submitBtn.classList.add('loading');
     submitBtn.textContent = '';
     
-    // Simulate API call
-    setTimeout(() => {
-        const user = {
-            id: Date.now(),
+    try {
+        // 1. Регистрация в Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
             email: email,
+            password: password,
+            options: {
+                data: {
+                    username: username
+                }
+            }
+        });
+
+        if (authError) {
+            console.error('Ошибка регистрации:', authError);
+            showNotification('Ошибка регистрации: ' + authError.message, 'error');
+            return;
+        }
+
+        // 2. Создание профиля в таблице users
+        const { error: profileError } = await supabase
+            .from('users')
+            .insert({
+                email: email,
+                username: username,
+                full_name: username
+            });
+
+        if (profileError) {
+            console.error('Ошибка создания профиля:', profileError);
+        }
+        
+        currentUser = {
+            id: authData.user.id,
+            email: authData.user.email,
             username: username,
-            registerTime: new Date().toISOString()
+            session: authData.session
         };
         
-        currentUser = user;
-        localStorage.setItem('currentUser', JSON.stringify(user));
         updateUIForLoggedInUser();
         hideRegisterModal();
         
@@ -421,7 +719,34 @@ function handleRegister(e) {
         submitBtn.textContent = 'Зарегистрироваться';
         
         showNotification('Регистрация успешна! Добро пожаловать, ' + username + '!', 'success');
-    }, 1500);
+        
+    } catch (error) {
+        console.error('Ошибка при регистрации:', error);
+        showNotification('Ошибка соединения', 'error');
+        submitBtn.classList.remove('loading');
+        submitBtn.textContent = 'Зарегистрироваться';
+    }
+}
+
+async function createUserProfile(user, username = null) {
+    try {
+        const profileUsername = username || user.email.split('@')[0];
+        
+        const { error } = await supabase
+            .from('profiles')
+            .upsert({
+                user_id: user.id,
+                username: profileUsername,
+                email: user.email,
+                updated_at: new Date().toISOString()
+            });
+
+        if (error) {
+            console.error('Ошибка создания профиля:', error);
+        }
+    } catch (error) {
+        console.error('Ошибка при создании профиля:', error);
+    }
 }
 
 function validateEmail(email) {
@@ -463,11 +788,24 @@ function clearFormErrors(formId) {
     });
 }
 
-function logout() {
-    currentUser = null;
-    localStorage.removeItem('currentUser');
-    updateUIForLoggedOutUser();
-    showNotification('Вы вышли из аккаунта', 'info');
+async function logout() {
+    try {
+        const { error } = await supabase.auth.signOut();
+        
+        if (error) {
+            console.error('Ошибка выхода:', error);
+            showNotification('Ошибка выхода', 'error');
+            return;
+        }
+        
+        currentUser = null;
+        updateUIForLoggedOutUser();
+        showNotification('Вы вышли из аккаунта', 'info');
+        
+    } catch (error) {
+        console.error('Ошибка при выходе:', error);
+        showNotification('Ошибка соединения', 'error');
+    }
 }
 
 function openVideo(videoUrl, event) {
