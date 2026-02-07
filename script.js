@@ -73,13 +73,17 @@ async function testSupabaseConnection() {
             
         if (error) {
             console.error('❌ Ошибка подключения к Supabase:', error);
-            showNotification('Ошибка подключения к базе данных', 'error');
+            showNotification('Ошибка подключения к базе данных: ' + error.message, 'error');
+            return false;
         } else {
             console.log('✅ Подключение к Supabase успешно!');
+            showNotification('Подключение к базе данных успешно!', 'success');
+            return true;
         }
     } catch (error) {
         console.error('❌ Критическая ошибка Supabase:', error);
         showNotification('Критическая ошибка базы данных', 'error');
+        return false;
     }
 }
 
@@ -149,21 +153,35 @@ function subscribeToChat() {
         chatSubscription.unsubscribe();
     }
 
-    chatSubscription = supabase
-        .channel('chat-room')
-        .on('postgres_changes', 
-            { 
-                event: 'INSERT', 
-                schema: 'public', 
-                table: 'messages'
-            }, 
-            (payload) => {
-                // Новое сообщение получено
-                displayChatMessage(payload.new);
-                scrollToBottom();
-            }
-        )
-        .subscribe();
+    try {
+        chatSubscription = supabase
+            .channel('chat-room')
+            .on('postgres_changes', 
+                { 
+                    event: 'INSERT', 
+                    schema: 'public', 
+                    table: 'messages'
+                }, 
+                (payload) => {
+                    console.log('Realtime сообщение получено:', payload);
+                    // Новое сообщение получено
+                    displayChatMessage(payload.new);
+                    scrollToBottom();
+                }
+            )
+            .subscribe((status) => {
+                console.log('Realtime статус:', status);
+                if (status === 'SUBSCRIBED') {
+                    console.log('✅ Realtime подключен успешно!');
+                } else if (status === 'TIMED_OUT' || status === 'CLOSED') {
+                    console.log('❌ Realtime отключен, пробуем переподключиться...');
+                    setTimeout(subscribeToChat, 5000);
+                }
+            });
+    } catch (error) {
+        console.error('❌ Ошибка подписки Realtime:', error);
+        showNotification('Ошибка подключения к чату в реальном времени', 'error');
+    }
 }
 
 function displayChatMessage(message) {
