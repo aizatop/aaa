@@ -1,0 +1,26 @@
+name: Auto-create PR for reboot branches
+
+on:
+  push:
+    branches:
+      - 'reboot-from-local-*'
+
+permissions:
+  contents: write
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: 'chore: publish workspace (automated)'
+          body: |-
+            Автоматически созданный PR с локальной ветки `reboot-from-local-*`.
+            Пожалуйста, проверьте CI и слейте в main для публикации на GitHub Pages.
+          base: main
+          labels: automated, ci
+          draft: false
