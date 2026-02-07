@@ -1,6 +1,10 @@
 // Global state
 let currentUser = null;
 let countries = [];
+let chatSubscription = null;
+
+// Supabase клиент
+const supabase = window.supabaseClient;
 
 // Countries data
 const countriesData = [
@@ -48,6 +52,144 @@ function initializeApp() {
     setupEventListeners();
     checkAuthStatus();
     setupSmoothScroll();
+    initializeChat();
+}
+
+// Chat Functions
+async function initializeChat() {
+    if (!supabase) {
+        console.error('Supabase не настроен. Проверьте supabase-config.js');
+        showNotification('Чат временно недоступен', 'warning');
+        return;
+    }
+
+    // Загружаем историю сообщений
+    await loadChatHistory();
+    
+    // Подписываемся на новые сообщения
+    subscribeToChat();
+}
+
+async function loadChatHistory() {
+    try {
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('room_id', 'general')
+            .order('created_at', { ascending: true })
+            .limit(50);
+
+        if (error) {
+            console.error('Ошибка загрузки истории чата:', error);
+            return;
+        }
+
+        // Отображаем загруженные сообщения
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML = ''; // Очищаем контейнер
+
+        data.forEach(message => {
+            displayChatMessage(message);
+        });
+
+        // Прокручиваем вниз
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    } catch (error) {
+        console.error('Ошибка при загрузке истории:', error);
+    }
+}
+
+function subscribeToChat() {
+    if (chatSubscription) {
+        chatSubscription.unsubscribe();
+    }
+
+    chatSubscription = supabase
+        .channel('chat-room')
+        .on('postgres_changes', 
+            { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'messages',
+                filter: 'room_id=eq.general'
+            }, 
+            (payload) => {
+                // Новое сообщение получено
+                displayChatMessage(payload.new);
+                scrollToBottom();
+            }
+        )
+        .subscribe();
+}
+
+function displayChatMessage(message) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageElement = document.createElement('div');
+    messageElement.className = 'chat-message';
+    
+    // Определяем, это сообщение текущего пользователя
+    const isOwnMessage = currentUser && message.user_id === currentUser.id;
+    
+    messageElement.innerHTML = `
+        <div class="message-author ${isOwnMessage ? 'own-message' : ''}">
+            ${message.username} ${isOwnMessage ? '(вы)' : ''}
+        </div>
+        <div class="message-content">${escapeHtml(message.content)}</div>
+        <div class="message-time">${formatTime(new Date(message.created_at))}</div>
+    `;
+    
+    chatMessages.appendChild(messageElement);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function scrollToBottom() {
+    const chatMessages = document.getElementById('chatMessages');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+async function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    if (!currentUser) {
+        showNotification('Пожалуйста, войдите для отправки сообщений', 'warning');
+        showLoginModal();
+        return;
+    }
+    
+    try {
+        const { error } = await supabase
+            .from('messages')
+            .insert({
+                content: message,
+                username: currentUser.username,
+                user_id: currentUser.id,
+                room_id: 'general'
+            });
+
+        if (error) {
+            console.error('Ошибка отправки сообщения:', error);
+            showNotification('Не удалось отправить сообщение', 'error');
+            return;
+        }
+
+        // Очищаем поле ввода
+        input.value = '';
+        
+        // Сообщение появится через realtime подписку
+        showNotification('Сообщение отправлено', 'success');
+        
+    } catch (error) {
+        console.error('Ошибка при отправке:', error);
+        showNotification('Ошибка соединения', 'error');
+    }
 }
 
 function loadCountries() {
@@ -350,34 +492,6 @@ function playVideo(countryName) {
     setTimeout(() => {
         showNotification(`Видео о ${countryName} готово к просмотру!`, 'success');
     }, 2000);
-}
-
-function sendMessage() {
-    const input = document.getElementById('chatInput');
-    const message = input.value.trim();
-    
-    if (!message) return;
-    
-    if (!currentUser) {
-        showNotification('Пожалуйста, войдите для отправки сообщений', 'warning');
-        showLoginModal();
-        return;
-    }
-    
-    const chatMessages = document.getElementById('chatMessages');
-    const messageElement = document.createElement('div');
-    messageElement.className = 'chat-message';
-    messageElement.innerHTML = `
-        <div class="message-author">${currentUser.username}</div>
-        <div class="message-content">${message}</div>
-        <div class="message-time">${formatTime(new Date())}</div>
-    `;
-    
-    chatMessages.appendChild(messageElement);
-    input.value = '';
-    
-    // Scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 function formatTime(date) {
