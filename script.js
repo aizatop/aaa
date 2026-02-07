@@ -379,23 +379,6 @@ async function sendMessage() {
     
     if (!message) return;
     
-    // Проверяем, это вопрос к AI
-    if (message.toLowerCase().includes('бот') || 
-        message.toLowerCase().includes('travelbot') || 
-        message.toLowerCase().includes('ассистент') ||
-        message.toLowerCase().includes('помощь') ||
-        message.toLowerCase().includes('подскажи') ||
-        message.toLowerCase().includes('расскажи') ||
-        message.toLowerCase().includes('что') ||
-        message.toLowerCase().includes('как') ||
-        message.toLowerCase().includes('куда')) {
-        
-        // Отправляем вопрос AI
-        askAIAssistant(message);
-        input.value = '';
-        return;
-    }
-    
     if (!currentUser) {
         showNotification('Пожалуйста, войдите для отправки сообщений', 'warning');
         showLoginModal();
@@ -417,7 +400,7 @@ async function sendMessage() {
 
         if (error) {
             console.error('Ошибка отправки сообщения:', error);
-            showNotification('Не удалось отправить сообщение', 'error');
+            showNotification('Не удалось отправить сообщение: ' + error.message, 'error');
             return;
         }
 
@@ -436,7 +419,7 @@ async function sendMessage() {
         
     } catch (error) {
         console.error('Ошибка при отправке:', error);
-        showNotification('Ошибка соединения', 'error');
+        showNotification('Ошибка соединения: ' + error.message, 'error');
     }
 }
 
@@ -482,22 +465,24 @@ function createCountryCard(country) {
 }
 
 function setupEventListeners() {
-    // Navigation
+    // Кнопка входа
     document.getElementById('loginBtn').addEventListener('click', showLoginModal);
-    document.getElementById('logoutBtn').addEventListener('click', logout);
-    document.getElementById('getStartedBtn').addEventListener('click', () => scrollToSection('countries'));
     
-    // Modal
+    // Кнопка выхода
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    
+    // Кнопка регистрации
+    document.getElementById('registerBtn').addEventListener('click', showRegisterModal);
+    
+    // Закрытие модальных окон
     document.getElementById('closeModal').addEventListener('click', hideLoginModal);
     document.getElementById('closeRegisterModal').addEventListener('click', hideRegisterModal);
-    document.getElementById('showRegister').addEventListener('click', showRegisterModal);
-    document.getElementById('showLogin').addEventListener('click', showLoginModal);
     
-    // Forms
+    // Обработчики форм
     document.getElementById('loginForm').addEventListener('submit', handleLogin);
     document.getElementById('registerForm').addEventListener('submit', handleRegister);
     
-    // Chat
+    // Поддержка Enter для отправки сообщений
     document.getElementById('sendBtn').addEventListener('click', sendMessage);
     document.getElementById('chatInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
