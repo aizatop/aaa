@@ -171,8 +171,34 @@ function handleLogin(e) {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     
-    // Simple validation (in real app, this would be server-side)
-    if (email && password) {
+    // Clear previous errors
+    clearFormErrors('loginForm');
+    
+    // Validation
+    let hasError = false;
+    
+    if (!validateEmail(email)) {
+        showFieldError('email');
+        hasError = true;
+    }
+    
+    if (!password || password.length < 6) {
+        showFieldError('password');
+        hasError = true;
+    }
+    
+    if (hasError) {
+        showNotification('Пожалуйста, исправьте ошибки в форме', 'error');
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = e.target.querySelector('.submit-btn');
+    submitBtn.classList.add('loading');
+    submitBtn.textContent = '';
+    
+    // Simulate API call
+    setTimeout(() => {
         const user = {
             id: Date.now(),
             email: email,
@@ -187,11 +213,11 @@ function handleLogin(e) {
         
         // Clear form
         document.getElementById('loginForm').reset();
+        submitBtn.classList.remove('loading');
+        submitBtn.textContent = 'Войти';
         
         showNotification('Добро пожаловать, ' + user.username + '!', 'success');
-    } else {
-        showNotification('Пожалуйста, заполните все поля', 'error');
-    }
+    }, 1500);
 }
 
 function handleRegister(e) {
@@ -200,8 +226,39 @@ function handleRegister(e) {
     const password = document.getElementById('regPassword').value;
     const username = document.getElementById('regUsername').value;
     
-    // Simple validation
-    if (email && password && username) {
+    // Clear previous errors
+    clearFormErrors('registerForm');
+    
+    // Validation
+    let hasError = false;
+    
+    if (!validateEmail(email)) {
+        showFieldError('regEmail');
+        hasError = true;
+    }
+    
+    if (!username || username.length < 3) {
+        showFieldError('regUsername');
+        hasError = true;
+    }
+    
+    if (!password || password.length < 6) {
+        showFieldError('regPassword');
+        hasError = true;
+    }
+    
+    if (hasError) {
+        showNotification('Пожалуйста, исправьте ошибки в форме', 'error');
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = e.target.querySelector('.submit-btn');
+    submitBtn.classList.add('loading');
+    submitBtn.textContent = '';
+    
+    // Simulate API call
+    setTimeout(() => {
         const user = {
             id: Date.now(),
             email: email,
@@ -216,11 +273,33 @@ function handleRegister(e) {
         
         // Clear form
         document.getElementById('registerForm').reset();
+        submitBtn.classList.remove('loading');
+        submitBtn.textContent = 'Зарегистрироваться';
         
         showNotification('Регистрация успешна! Добро пожаловать, ' + username + '!', 'success');
-    } else {
-        showNotification('Пожалуйста, заполните все поля', 'error');
-    }
+    }, 1500);
+}
+
+function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+function showFieldError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const formGroup = field.closest('.form-group');
+    formGroup.classList.add('error');
+    
+    // Remove error on input
+    field.addEventListener('input', function() {
+        formGroup.classList.remove('error');
+    }, { once: true });
+}
+
+function clearFormErrors(formId) {
+    const form = document.getElementById(formId);
+    const errorGroups = form.querySelectorAll('.form-group.error');
+    errorGroups.forEach(group => group.classList.remove('error'));
 }
 
 function logout() {
