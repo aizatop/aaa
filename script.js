@@ -6,45 +6,35 @@ let countries = [];
 const countriesData = [
     {
         id: 1,
-        name: 'Франция',
-        description: 'Романтическая страна с Эйфелевой башней и прекрасной кухней',
-        image: 'https://images.unsplash.com/photo-1502602895652-6e463b3e3db?w=800&h=600&fit=crop',
-        attractions: ['Эйфелева башня', 'Лувр', 'Нотр-Дам']
+        name: 'Япония',
+        description: 'Страна восходящего солнца с уникальной культурой, передовыми технологиями и древними традициями',
+        image: 'https://resize.tripster.ru/g_luU5kGMuMmG4fN1o0udHBw9yA=/fit-in/1080x1440/filters:no_upscale()/https://cdn.tripster.ru/photos/ab88bae9-9e48-4fa9-ae92-04ea32299330.jpg',
+        videoUrl: 'https://youtu.be/YIo2tJSkidk?si=Yzb4eK2ZzfB90s8z',
+        attractions: ['Фудзияма', 'Киото', 'Токио', 'Осака', 'Храмы и сады', 'Сакура']
     },
     {
         id: 2,
-        name: 'Япония',
-        description: 'Страна восходящего солнца с уникальной культурой и технологиями',
-        image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0?w=800&h=600&fit=crop',
-        attractions: ['Фудзияма', 'Киото', 'Токио']
+        name: 'Франция',
+        description: 'Романтическая страна с Эйфелевой башней, прекрасной кухней и богатой историей',
+        image: 'https://as1.ftcdn.net/jpg/01/47/49/76/1000_F_147497684_2GfgE05sJ8hxeYsZZTm6tBu2EHCc98G2.jpg',
+        videoUrl: 'https://youtu.be/EkshFcLESPU?si=SDj9VQYjR9_nb154',
+        attractions: ['Эйфелева башня', 'Лувр', 'Нотр-Дам', 'Версаль', 'Лазурный берег', 'Французская кухня']
     },
     {
         id: 3,
         name: 'Италия',
-        description: 'Колыбель искусства и истории с невероятной едой',
-        image: 'https://images.unsplash.com/photo-1515522676290-f9bf782f6fd8?w=800&h=600&fit=crop',
-        attractions: ['Рим', 'Венеция', 'Флоренция']
+        description: 'Колыбель искусства и истории с невероятной едой, древними руинами и живописными пейзажами',
+        image: 'https://img.freepik.com/premium-photo/scenic-view-sea-against-sky_1048944-25393574.jpg?semt=ais_hybrid&w=740',
+        videoUrl: 'https://youtu.be/pwivE6bvD8w?si=52ocgv3QkNGHoAH7',
+        attractions: ['Рим', 'Венеция', 'Флоренция', 'Колизей', 'Пизанская башня', 'Итальянская кухня']
     },
     {
         id: 4,
-        name: 'Египет',
-        description: 'Древняя цивилизация с пирамидами и сфинксами',
-        image: 'https://images.unsplash.com/photo-1542051841497-5b94a8392493?w=800&h=600&fit=crop',
-        attractions: ['Пирамиды Гизы', 'Луксор', 'Каир']
-    },
-    {
-        id: 5,
-        name: 'Бразилия',
-        description: 'Страна карнавала с амазонскими лесами и пляжами',
-        image: 'https://images.unsplash.com/photo-1483729782078-4d564d0ab21?w=800&h=600&fit=crop',
-        attractions: ['Рио-де-Жанейро', 'Сан-Паулу', 'Амазония']
-    },
-    {
-        id: 6,
-        name: 'Австралия',
-        description: 'Уникальная природа и дикая фауна на краю света',
-        image: 'https://images.unsplash.com/photo-1506905925346-5671a98d0407?w=800&h=600&fit=crop',
-        attractions: ['Сидней', 'Большой Барьерный риф', 'Улуру']
+        name: 'Лондон',
+        description: 'Величественный город с королевскими традициями, современными достопримечательностями и богатой культурой',
+        image: 'https://i.pinimg.com/originals/a3/b4/a8/a3b4a8962647ba45905ce683d03a60c6.jpg',
+        videoUrl: 'https://youtu.be/SNx8B_oE8IY?si=IQwAu6rWwdCnVBSh',
+        attractions: ['Биг-Бен', 'Лондонский Тауэр', 'Букингемский дворец', 'Британский музей', 'Ай-кон', 'Темза']
     }
 ];
 
@@ -73,17 +63,29 @@ function loadCountries() {
 function createCountryCard(country) {
     const card = document.createElement('div');
     card.className = 'country-card';
+    
+    // Создаем HTML для достопримечательностей
+    const attractionsHtml = country.attractions.map(attraction => 
+        `<span class="attraction-tag">${attraction}</span>`
+    ).join('');
+    
     card.innerHTML = `
         <div class="card-image-wrapper">
             <img src="${country.image}" alt="${country.name}" class="country-image">
             <div class="overlay"></div>
-            <a href="#" class="play-button" onclick="playVideo('${country.name}')">
+            <a href="${country.videoUrl}" target="_blank" class="play-button" onclick="openVideo('${country.videoUrl}', event)">
                 ▶
             </a>
         </div>
         <div class="country-content">
             <h3 class="country-name">${country.name}</h3>
-            <p class="description-preview">${country.description}</p>
+            <p class="country-description">${country.description}</p>
+            <div class="attractions-container">
+                <h4 class="attractions-title">📍 Главные достопримечательности:</h4>
+                <div class="attractions-tags">
+                    ${attractionsHtml}
+                </div>
+            </div>
         </div>
     `;
     return card;
@@ -324,6 +326,21 @@ function logout() {
     localStorage.removeItem('currentUser');
     updateUIForLoggedOutUser();
     showNotification('Вы вышли из аккаунта', 'info');
+}
+
+function openVideo(videoUrl, event) {
+    event.preventDefault();
+    
+    if (!currentUser) {
+        showNotification('Пожалуйста, войдите для просмотра видео', 'warning');
+        showLoginModal();
+        return;
+    }
+    
+    showNotification('Открытие видео в новой вкладке...', 'info');
+    
+    // Открываем видео в новой вкладке
+    window.open(videoUrl, '_blank');
 }
 
 function playVideo(countryName) {
