@@ -24,18 +24,17 @@ const countriesData = [
     },
     {
         name: 'Италия',
-        description: 'Колыбель искусства и истории с невероятной едой, древними руинами и живописными пейзажами',
-        image: 'https://img.freepik.com/premium-photo/scenic-view-sea-against-sky_1048944-25393574.jpg?semt=ais_hybrid&w=740',
+        description: 'Колыбель Римской империи и искусства',
+        attractions: ['Рим', 'Венеция', 'Флоренция', 'Колизей', 'Пизанская башня'],
         videoUrl: 'https://youtu.be/pwivE6bvD8w?si=52ocgv3QkNGHoAH7',
-        attractions: ['Рим', 'Венеция', 'Флоренция', 'Колизей', 'Пизанская башня', 'Итальянская кухня']
+        coverImage: 'https://img.freepik.com/premium-photo/scenic-view-sea-against-sky_1048944-25393574.jpg?semt=ais_hybrid&w=740'
     },
     {
-        id: 4,
-        name: 'Лондон',
-        description: 'Величественный город с королевскими традициями, современными достопримечательностями и богатой культурой',
-        image: 'https://i.pinimg.com/originals/a3/b4/a8/a3b4a8962647ba45905ce683d03a60c6.jpg',
+        name: 'Великобритания',
+        description: 'Туманный Альбион с королевскими традициями',
+        attractions: ['Лондон', 'Стоунхендж', 'Эдинбург', 'Бат'],
         videoUrl: 'https://youtu.be/SNx8B_oE8IY?si=IQwAu6rWwdCnVBSh',
-        attractions: ['Биг-Бен', 'Лондонский Тауэр', 'Букингемский дворец', 'Британский музей', 'Ай-кон', 'Темза']
+        coverImage: 'https://i.pinimg.com/originals/a3/b4/a8/a3b4a8962647ba45905ce683d03a60c6.jpg'
     }
 ];
 
@@ -426,13 +425,25 @@ async function sendMessage() {
 }
 
 function loadCountries() {
+    console.log('🌍 Загрузка стран...');
+    
     const container = document.getElementById('countriesContainer');
+    if (!container) {
+        console.error('❌ Контейнер стран не найден!');
+        return;
+    }
+    
     container.innerHTML = '';
     
-    countriesData.forEach(country => {
+    console.log('📊 Данные стран:', countriesData);
+    
+    countriesData.forEach((country, index) => {
+        console.log(`🏳️ Создание карточки ${index + 1}: ${country.name}`);
         const countryCard = createCountryCard(country);
         container.appendChild(countryCard);
     });
+    
+    console.log('✅ Страны успешно загружены!');
 }
 
 // Функция для открытия видео
@@ -446,8 +457,18 @@ function openVideo(videoUrl, event) {
 }
 
 function createCountryCard(country) {
+    console.log(`🎨 Создание карточки для: ${country.name}`);
+    console.log(`🖼️ Обложка: ${country.coverImage}`);
+    console.log(`🎬 Видео: ${country.videoUrl}`);
+    
     const card = document.createElement('div');
     card.className = 'country-card';
+    
+    // Проверяем наличие обложки
+    if (!country.coverImage) {
+        console.error(`❌ Отсутствует обложка для страны: ${country.name}`);
+        return null;
+    }
     
     // Создаем HTML для достопримечательностей
     const attractionsHtml = country.attractions.map(attraction => 
@@ -473,6 +494,8 @@ function createCountryCard(country) {
             </div>
         </div>
     `;
+    
+    console.log(`✅ Карточка для ${country.name} создана`);
     return card;
 }
 
