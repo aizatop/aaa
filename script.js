@@ -9,23 +9,20 @@ const supabase = window.supabaseClient;
 // Countries data
 const countriesData = [
     {
-        id: 1,
         name: 'Япония',
-        description: 'Страна восходящего солнца с уникальной культурой, передовыми технологиями и древними традициями',
-        image: 'https://resize.tripster.ru/g_luU5kGMuMmG4fN1o0udHBw9yA=/fit-in/1080x1440/filters:no_upscale()/https://cdn.tripster.ru/photos/ab88bae9-9e48-4fa9-ae92-04ea32299330.jpg',
+        description: 'Страна восходящего солнца с уникальной культурой',
+        attractions: ['Фудзияма', 'Киото', 'Токио', 'Осака'],
         videoUrl: 'https://youtu.be/YIo2tJSkidk?si=Yzb4eK2ZzfB90s8z',
-        attractions: ['Фудзияма', 'Киото', 'Токио', 'Осака', 'Храмы и сады', 'Сакура']
+        coverImage: 'https://resize.tripster.ru/g_luU5kGMuMmG4fN1o0udHBw9yA=/fit-in/1080x1440/filters:no_upscale()/https://cdn.tripster.ru/photos/ab88bae9-9e48-4fa9-ae92-04ea32299330.jpg'
     },
     {
-        id: 2,
         name: 'Франция',
-        description: 'Романтическая страна с Эйфелевой башней, прекрасной кухней и богатой историей',
-        image: 'https://as1.ftcdn.net/jpg/01/47/49/76/1000_F_147497684_2GfgE05sJ8hxeYsZZTm6tBu2EHCc98G2.jpg',
-        videoUrl: 'https://youtu.be/EkshFcLESPU?si=SDj9VQYjR9_nb154',
-        attractions: ['Эйфелева башня', 'Лувр', 'Нотр-Дам', 'Версаль', 'Лазурный берег', 'Французская кухня']
+        description: 'Романтическая страна с богатой историей',
+        attractions: ['Эйфелева башня', 'Лувр', 'Версаль', 'Ницца'],
+        videoUrl: 'https://youtu.be/ekshFcLESPU?si=SDj9VQYjR9_nb154',
+        coverImage: 'https://as1.ftcdn.net/jpg/01/47/49/76/1000_F_147497684_2GfgE05sJ8hxeYsZZTm6tBu2EHCc98G2.jpg'
     },
     {
-        id: 3,
         name: 'Италия',
         description: 'Колыбель искусства и истории с невероятной едой, древними руинами и живописными пейзажами',
         image: 'https://img.freepik.com/premium-photo/scenic-view-sea-against-sky_1048944-25393574.jpg?semt=ais_hybrid&w=740',
@@ -438,6 +435,16 @@ function loadCountries() {
     });
 }
 
+// Функция для открытия видео
+function openVideo(videoUrl, event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    console.log('🎬 Открытие видео:', videoUrl);
+    window.open(videoUrl, '_blank');
+}
+
 function createCountryCard(country) {
     const card = document.createElement('div');
     card.className = 'country-card';
@@ -449,7 +456,7 @@ function createCountryCard(country) {
     
     card.innerHTML = `
         <div class="card-image-wrapper">
-            <img src="${country.image}" alt="${country.name}" class="country-image">
+            <img src="${country.coverImage}" alt="${country.name}" class="country-image" onclick="openVideo('${country.videoUrl}', event)">
             <div class="overlay"></div>
             <a href="${country.videoUrl}" target="_blank" class="play-button" onclick="openVideo('${country.videoUrl}', event)">
                 ▶
